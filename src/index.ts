@@ -1,11 +1,4 @@
-import type { EventSubscriptionVendor } from 'react-native';
 import { NativeModules, NativeEventEmitter } from 'react-native';
-
-declare module CloudKitStorageModule {
-  const registerForPushUpdates: () => void;
-  const getItem: (key: string) => Promise<string | null>;
-  const setItem: (key: string, value: string) => Promise<void>;
-}
 
 type EventSubscription = {
   remove: () => void;
@@ -22,8 +15,7 @@ interface Events {
   ): EventSubscription;
 }
 
-const CloudKitStorage = NativeModules.CloudKitStorage as
-  | typeof CloudKitStorageModule & EventSubscriptionVendor;
+const { CloudKitStorage } = NativeModules;
 const events = new NativeEventEmitter(CloudKitStorage);
 
 export default {

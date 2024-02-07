@@ -293,14 +293,16 @@ RCT_EXPORT_METHOD(setItem:(NSString *)recordName
   operation.qualityOfService = NSQualityOfServiceUserInitiated;
 
   operation.modifyRecordsCompletionBlock= ^(NSArray *savedRecords,
-                                            NSArray *deletedRecordIDs,
-                                            NSError *operationError) {
-    if (error == nil) {
-      resolve(nil);
-    } else {
-      reject(@"could_not_save_contents", @"Could not save contents", error);
-    }
-  };
+                                          NSArray *deletedRecordIDs,
+                                          NSError *operationError) {
+  if (operationError == nil) {
+    NSLog(@"Successfully saved record.");
+    resolve(nil);
+  } else {
+    NSLog(@"Failed to save record: %@", operationError);
+    reject(@"could_not_save_contents", @"Could not save contents", operationError);
+  }
+};
 
 
   [CKContainer.defaultContainer.privateCloudDatabase addOperation:operation];
