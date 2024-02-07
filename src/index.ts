@@ -20,22 +20,8 @@ const events = new NativeEventEmitter(CloudKitStorage);
 
 export default {
   registerForPushUpdates: CloudKitStorage.registerForPushUpdates,
-  getItem: (
-    recordName: string,
-    recordType?: string,
-    field?: string
-  ): Promise<string> => {
-    return CloudKitStorage.getItem(recordName, recordType, field);
-  },
-
-  setItem: (
-    recordName: string,
-    contents: string,
-    recordType?: string,
-    field?: string
-  ): Promise<void> => {
-    return CloudKitStorage.setItem(recordName, contents, recordType, field);
-  },
+  getItem: CloudKitStorage.getItem,
+  setItem: CloudKitStorage.setItem,
   addListener: ((event, handler) => {
     return events.addListener(event, handler);
   }) as Events,
