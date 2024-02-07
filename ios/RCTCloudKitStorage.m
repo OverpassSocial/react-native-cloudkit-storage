@@ -253,59 +253,68 @@ RCT_EXPORT_METHOD(setItem:(NSString *)recordName
                   resolve:(RCTPromiseResolveBlock)resolve
                   reject:(RCTPromiseRejectBlock)reject)
 {
-  CKRecordID *recordId = [[CKRecordID alloc]
-                          initWithRecordName:recordName
-                          zoneID:RCTCloudKitStorage.zone.zoneID];
+  CKRecordZoneID *zoneID = [[CKRecordZoneID alloc] initWithZoneName:kRCTCloudKitStorageZoneName ownerName:CKCurrentUserDefaultName];
+  CKDatabase *database = [CKContainer defaultContainer].privateCloudDatabase;
 
-  NSString *filename = [[[NSUUID UUID] UUIDString]
-                        stringByAppendingPathExtension:@".dat"];
-  NSURL *url = [[NSURL fileURLWithPath:NSTemporaryDirectory()]
-                URLByAppendingPathComponent:filename];
+  // Check if the zone already exists
+  [database fetchRecordZoneWithID:zoneID completionHandler:^(CKRecordZone * _Nullable zone, NSError * _Nullable error) {
+    if (zone) {
+      // Zone exists, proceed to save the item
+      [self saveItemWithRecordName:recordName contents:contents inZoneWithID:zoneID resolve:resolve reject:reject];
+    } else if (error.code == CKErrorZoneNotFound) {
+      // Zone not found, create it
+      CKRecordZone *newZone = [[CKRecordZone alloc] initWithZoneID:zoneID];
+      [database saveRecordZone:newZone completionHandler:^(CKRecordZone * _Nullable savedZone, NSError * _Nullable zoneError) {
+        if (zoneError) {
+          reject(@"could_not_create_zone", @"Could not create zone", zoneError);
+        } else {
+          // Zone created, proceed to save the item
+          [self saveItemWithRecordName:recordName contents:contents inZoneWithID:zoneID resolve:resolve reject:reject];
+        }
+      }];
+    } else {
+      // Some other error occurred
+      reject(@"could_not_fetch_zone", @"Could not fetch zone", error);
+    }
+  }];
+}
 
-  if (url == nil) {
-    reject(@"could_not_write_contents", @"Could not write contents", nil);
-    return;
-  }
+- (void)saveItemWithRecordName:(NSString *)recordName
+                      contents:(NSString *)contents
+                    inZoneWithID:(CKRecordZoneID *)zoneID
+                       resolve:(RCTPromiseResolveBlock)resolve
+                        reject:(RCTPromiseRejectBlock)reject
+{
+  CKDatabase *database = [CKContainer defaultContainer].privateCloudDatabase; // Define database here
+  CKRecordID *recordId = [[CKRecordID alloc] initWithRecordName:recordName zoneID:zoneID];
+  CKRecord *record = [[CKRecord alloc] initWithRecordType:kRCTCloudKitRecordType recordID:recordId];
+  NSString *filename = [[[NSUUID UUID] UUIDString] stringByAppendingPathExtension:@"dat"];
+  NSURL *url = [[NSURL fileURLWithPath:NSTemporaryDirectory()] URLByAppendingPathComponent:filename];
 
   NSError *error;
-  [contents writeToURL:url
-            atomically:YES
-              encoding:NSUTF8StringEncoding
-                 error:&error];
-
+  [contents writeToURL:url atomically:YES encoding:NSUTF8StringEncoding error:&error];
   if (error) {
     reject(@"could_not_write_contents", @"Could not write contents", error);
     return;
   }
 
-  CKRecord *record = [[CKRecord alloc]
-                      initWithRecordType:kRCTCloudKitRecordType
-                      recordID:recordId];
-
   CKAsset *asset = [[CKAsset alloc] initWithFileURL:url];
   [record setObject:asset forKey:@"contents"];
 
-  CKModifyRecordsOperation *operation = [[CKModifyRecordsOperation alloc]
-                                         initWithRecordsToSave:@[record]
-                                         recordIDsToDelete:nil];
-
+  CKModifyRecordsOperation *operation = [[CKModifyRecordsOperation alloc] initWithRecordsToSave:@[record] recordIDsToDelete:nil];
   operation.savePolicy = CKRecordSaveAllKeys;
   operation.qualityOfService = NSQualityOfServiceUserInitiated;
+  operation.modifyRecordsCompletionBlock = ^(NSArray *savedRecords, NSArray *deletedRecordIDs, NSError *operationError) {
+    if (operationError == nil) {
+      NSLog(@"Successfully saved record.");
+      resolve(nil);
+    } else {
+      NSLog(@"Failed to save record: %@", operationError);
+      reject(@"could_not_save_contents", @"Could not save contents", operationError);
+    }
+  };
 
-  operation.modifyRecordsCompletionBlock= ^(NSArray *savedRecords,
-                                          NSArray *deletedRecordIDs,
-                                          NSError *operationError) {
-  if (operationError == nil) {
-    NSLog(@"Successfully saved record.");
-    resolve(nil);
-  } else {
-    NSLog(@"Failed to save record: %@", operationError);
-    reject(@"could_not_save_contents", @"Could not save contents", operationError);
-  }
-};
-
-
-  [CKContainer.defaultContainer.privateCloudDatabase addOperation:operation];
+  [database addOperation:operation];
 }
 
 @end

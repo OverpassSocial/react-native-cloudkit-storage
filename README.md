@@ -43,6 +43,11 @@ Under containers, click the `+` button. Pick a name in the form `iCloud.org.{tea
 
 **It can take a day or so for the CloudKit database to fully set up.** If you're having issues, wait a few days, and check again.
 
+Open the [iCloud developer dashboard](https://icloud.developer.apple.com/) and do the following:
+
+1. Create a zone called `RCTCloudKitStorage`
+2. Create a record type called `RCTCloudKitRecordType` with a field called `contents` of type ASSET
+
 Next, open `AppDelegate.m` and add the following,
 
 ```objc
