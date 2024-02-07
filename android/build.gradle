@@ -19,7 +19,7 @@ def safeExtGet(prop, fallback) {
 }
 
 android {
-    compileSdkVersion safeExtGet('CloudkitStorage_compileSdkVersion', 29)
+    compileSdkVersion safeExtGet('CloudkitStorage_compileSdkVersion', 30)
     defaultConfig {
         minSdkVersion safeExtGet('CloudkitStorage_minSdkVersion', 16)
         targetSdkVersion safeExtGet('CloudkitStorage_targetSdkVersion', 29)
