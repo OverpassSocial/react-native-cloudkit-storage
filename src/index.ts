@@ -19,9 +19,9 @@ const { CloudKitStorage } = NativeModules;
 const events = new NativeEventEmitter(CloudKitStorage);
 
 export default {
-  registerForPushUpdates: CloudKitStorage.registerForPushUpdates,
-  getItem: CloudKitStorage.getItem,
-  setItem: CloudKitStorage.setItem,
+  registerForPushUpdates: CloudKitStorage?.registerForPushUpdates,
+  getItem: CloudKitStorage?.getItem,
+  setItem: CloudKitStorage?.setItem,
   addListener: ((event, handler) => {
     return events.addListener(event, handler);
   }) as Events,
