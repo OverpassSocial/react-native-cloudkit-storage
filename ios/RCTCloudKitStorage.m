@@ -229,17 +229,6 @@ RCT_EXPORT_METHOD(registerForPushUpdates)
   [CKContainer.defaultContainer.privateCloudDatabase addOperation:operation];
 }
 
-- (NSDictionary *)errorToDictionary:(NSError *)error {
-  if (!error) {
-    return nil;
-  }
-  return @{
-    @"code": @(error.code),
-    @"domain": error.domain,
-    @"userInfo": error.userInfo ?: @{},
-  };
-}
-
 RCT_EXPORT_METHOD(getItem:(NSString *)recordName
                   resolve:(RCTPromiseResolveBlock)resolve
                   reject:(RCTPromiseRejectBlock)reject)
@@ -254,7 +243,9 @@ RCT_EXPORT_METHOD(getItem:(NSString *)recordName
     if (contents != nil) {
       resolve(contents);
     } else {
-      reject(@"could_not_load_contents", @"Could not load contents", [self errorToDictionary:error]);
+      // Convert NSError to a string containing the error details
+      NSString *errorDescription = [NSString stringWithFormat:@"Error code: %ld, Description: %@, User Info: %@", (long)error.code, error.localizedDescription, error.userInfo];
+      reject(@"could_not_load_contents", @"Could not load contents", errorDescription);
     }
   }];
 }
