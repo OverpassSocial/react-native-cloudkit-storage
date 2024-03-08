@@ -243,9 +243,7 @@ RCT_EXPORT_METHOD(getItem:(NSString *)recordName
     if (contents != nil) {
       resolve(contents);
     } else {
-      // Convert NSError to a string containing the error details
-      NSString *errorDescription = [NSString stringWithFormat:@"Error code: %ld, Description: %@, User Info: %@", (long)error.code, error.localizedDescription, error.userInfo];
-      reject(@"could_not_load_contents", @"Could not load contents", errorDescription);
+      reject(@"could_not_load_contents", @"Could not load contents", error);
     }
   }];
 }
